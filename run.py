@@ -1,4 +1,5 @@
 from FA import *
 
 if __name__ == "__main__":
-    nfa = FA.generateFAFromFile("./data.in") 
+    nfa = NFA.generateFAFromFile("./data.in") 
+    nfa.printFA()

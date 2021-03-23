@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-from typing import List, Dict
 from __future__ import annotations
+from typing import List, Dict
 
 
 class NFA:
@@ -36,11 +36,19 @@ class NFA:
     def printFA(self):
         print(f'states_num: {self.states_num}')
         print(f'input: {self.input}')
-        print(f'functions: {self.functions}')
+        print(f'functions:')
+        self.printFunctions()
         print(f'start_state: {self.start_state}')
         print(f'final_states: {self.final_states}')
 
+    def printFunctions(self):
+        print('From\tInput\tTo')
+        for x in range(self.states_num):
+            for key, val in self.functions[x].items():
+                print(f'{x}\t{key}\t{val}')
+
 class DFA(NFA):
     def __init__(self):
+        super(NFA, self).__init__()
         self.functions: List[Dict[str, int]] = []
 
