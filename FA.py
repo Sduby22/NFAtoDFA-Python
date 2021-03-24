@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
 from __future__ import annotations
-from typing import List, Dict, Set
+from typing import List, Dict, Set, FrozenSet
 
 class State:
     def __init__(self, name):
-        self.name: str = name
+        self.name: str = str(name)
         self.function: Dict[str, List[State]] = {}
     def __str__(self):
         return self.name
@@ -70,27 +70,35 @@ class NFA:
 
 class DFA(NFA):
     def __init__(self):
-        super(NFA, self).__init__()
-        self.functions: List[Dict[str, State]] = []
+        super(DFA, self).__init__()
 
     @classmethod
     def genDFAFromNFA(cls, nfa: NFA) -> DFA:
         dfa = cls()
-
+        dfa.input = nfa.input
         # A queue of new NFA combinations(List[State])
         state_queue: List[Set[State]] = [{nfa.start_state}]
-        dfa_states: Set[Set[State]] = set()
+        init_state = State(State.stateListToStr([nfa.start_state]))
+        dfa.start_state = init_state
+        dfa_states: Dict[FrozenSet[State], State] = {frozenset([ nfa.start_state ]): init_state}
 
         while state_queue:
-            states = state_queue.pop()
-            dfa_states.add(states)
+            states = frozenset(state_queue.pop())
+            dfa.states.append(dfa_states[states])
+            dfa.states_num+=1
+            if set(nfa.final_states) | states == states:
+                dfa.final_states.append(dfa_states[states])
 
             for input in nfa.input:
                 dest_states = set()
                 for state in states:
                     dest_states |= set(state.function[input])
+                dest_states = frozenset(dest_states)
                 if dest_states not in dfa_states:
-                    state_queue.append(dest_states)
+                    state_queue.append(set(dest_states))
+                    new_state = State(State.stateListToStr(list(dest_states)))
+                    dfa_states[dest_states] = new_state
+                dfa_states[states].function[input] = [ dfa_states[dest_states] ]
 
         return dfa
 
