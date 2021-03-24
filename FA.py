@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from __future__ import annotations
-from typing import List, Dict
+from typing import List, Dict, Set
 
 class State:
     def __init__(self, name):
@@ -15,8 +15,13 @@ class State:
         string += '*' if isFinal else ' '
         string += self.name.ljust(20)
         for x in sorted(self.function):
-            string += f'\t{str([str(y) for y in self.function[x]]).ljust(20)}' 
+            string += f'\t{State.stateListToStr(self.function[x]).ljust(20)}' 
         print(string)
+
+    @classmethod
+    def stateListToStr(cls, states: List[State]):
+        return str([str(x) for x in states])
+        
 
 class NFA:
     def __init__(self):
@@ -26,7 +31,6 @@ class NFA:
         self.input: List[str] = []
         self.start_state: State = State(0)
         self.final_states: List[State] = []
-
     @classmethod
     def generateFAFromFile(cls, filename: str) -> NFA:
         nfa = cls()
@@ -39,7 +43,7 @@ class NFA:
             nfa.start_state = nfa.states[int(next(f).strip())]
             nfa.final_states = [nfa.states[x] for x in eval(next(f).strip())]
         return nfa
-        
+
     def getFunctionsFromFile(self, filename: str) -> None:
         with open(filename, 'r', encoding='utf-8') as f:
             func_list = eval(f.read()) 
@@ -67,11 +71,26 @@ class NFA:
 class DFA(NFA):
     def __init__(self):
         super(NFA, self).__init__()
-        self.functions: List[Dict[str, int]] = []
+        self.functions: List[Dict[str, State]] = []
 
     @classmethod
     def genDFAFromNFA(cls, nfa: NFA) -> DFA:
         dfa = cls()
-         
+
+        # A queue of new NFA combinations(List[State])
+        state_queue: List[Set[State]] = [{nfa.start_state}]
+        dfa_states: Set[Set[State]] = set()
+
+        while state_queue:
+            states = state_queue.pop()
+            dfa_states.add(states)
+
+            for input in nfa.input:
+                dest_states = set()
+                for state in states:
+                    dest_states |= set(state.function[input])
+                if dest_states not in dfa_states:
+                    state_queue.append(dest_states)
+
         return dfa
 
